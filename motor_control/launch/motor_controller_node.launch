@@ -1,0 +1,6 @@
+<launch>
+
+    	<node name="motor_controller_node" pkg="motor_control" type="motor_controller_node.py" output="screen" clear_params="true" required="true">
+        <rosparam command="load" file="$(find motor_control)/config/baseline/lane_control/lane_controller_node/default.yaml"/>
+    	</node>
+</launch>
