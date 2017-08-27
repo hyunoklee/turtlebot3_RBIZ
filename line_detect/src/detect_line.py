@@ -215,18 +215,10 @@ class LineDetectorNode(object):
 	    lines_normalized_red = red.lines
             segmentList.segments.extend(self.toSegmentMsg(lines_normalized_red, red.normals, Segment.RED))
 
-        #self.intermittent_log('# segments: white %3d yellow %3d red %3d' % (len(white.lines),
-        #        len(yellow.lines), len(red.lines)))
-
-	#rospy.loginfo('generateVote %f %f', segmentList.segments[0].points[0].x,segmentList.segments[0].points[1].x)
-        #segmentList.segments[0].pixels_normalized[1].x, segmentList.segments[0].normal.x)
-
-        tk.completed('prepared')
-
         # Publish segmentList
         self.pub_lines.publish(segmentList)
 	#self.loginfo('send segmentList publish finish')
-        tk.completed('--pub_lines--')
+
 
         # VISUALIZATION only below
 
