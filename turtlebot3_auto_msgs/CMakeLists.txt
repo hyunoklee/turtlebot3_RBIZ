@@ -63,7 +63,8 @@ add_message_files(
   ObstacleImageDetectionList.msg
   ObstacleProjectedDetection.msg
   ObstacleProjectedDetectionList.msg
-
+#RBIZ
+  ImgSignals.msg
 )
 
 add_service_files(

@@ -19,4 +19,3 @@ string NO_TRAFFIC_LIGHT='no_traffic_light'
 string STOP='tl_stop'
 string GO='tl_go'
 string YIELD='tl_yield'
-
