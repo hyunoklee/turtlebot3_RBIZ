@@ -60,7 +60,7 @@ class motor_controller(object):
     def cbCmdVelLine(self,cmd_vel_line_msg):
         self.cmd_vel_line_reading = cmd_vel_line_msg 
         twist = Twist() 
-	twist.linear.x = self.cmd_vel_line_msg.linear.x
+	twist.linear.x = self.cmd_vel_line_reading.linear.x
         twist.angular.z = self.cmd_vel_line_reading.angular.z    
         self.publishCmd(twist)
 
