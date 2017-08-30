@@ -1,5 +1,3 @@
-Written by Leon RyuWoon Jung
-
 This package refers to the [MIT Duckie Town source](https://github.com/duckietown/Software)
 
 You can find where the progress stopped by searching 'progress 3 stopped here' statement.
