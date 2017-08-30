@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from line_detector.AntiInstagram import *
+#from line_detector.AntiInstagram import *
 from cv_bridge import CvBridge, CvBridgeError
-from turtlebot3_auto_msgs.msg import (AntiInstagramTransform, BoolStamped, Segment,
+from turtlebot3_auto_msgs.msg import ( BoolStamped, Segment,
     SegmentList, Vector2D)
 from duckietown_utils.instantiate_utils import instantiate
 from duckietown_utils.jpg import image_cv_from_jpg
@@ -33,7 +33,7 @@ class LineDetectorNode(object):
         self.intermittent_counter = 1
 
         # color correction
-        self.ai = AntiInstagram()
+        #self.ai = AntiInstagram()
 
         # these will be added if it becomes verbose
         self.pub_edge = None
@@ -51,7 +51,7 @@ class LineDetectorNode(object):
 
         # Subscribers
         self.sub_image = rospy.Subscriber("image_raw/compressed", CompressedImage, self.cbImage, queue_size=1)
-        self.sub_transform = rospy.Subscriber("transform", AntiInstagramTransform, self.cbTransform, queue_size=1)
+        #self.sub_transform = rospy.Subscriber("transform", AntiInstagramTransform, self.cbTransform, queue_size=1)
 
         rospy.loginfo("[%s] Initialized (verbose = %s)." %(self.node_name, self.verbose))
 
@@ -93,12 +93,6 @@ class LineDetectorNode(object):
         thread.setDaemon(True)
         thread.start()
         # Returns rightaway
-
-    def cbTransform(self, transform_msg):
-        self.ai.shift = transform_msg.s[0:3]
-        self.ai.scale = transform_msg.s[3:6]
-
-        self.loginfo("AntiInstagram transform received")
 
     def loginfo(self, s):
         rospy.loginfo('[%s] %s' % (self.node_name, s))
@@ -175,8 +169,8 @@ class LineDetectorNode(object):
 
         # apply color correction: AntiInstagram
         # image_cv_corr = image_cv
-        image_cv_corr = self.ai.applyTransform(img_und)
-        image_cv_corr = cv2.convertScaleAbs(image_cv_corr)
+        #image_cv_corr = self.ai.applyTransform(img_und)
+        image_cv_corr = cv2.convertScaleAbs(img_und)
 
         tk.completed('corrected')
 

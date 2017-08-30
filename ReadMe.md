@@ -48,19 +48,6 @@ These packages can be launched by following commands
   ```bash
   $ roslaunch turtlebot3_auto_sensor image_get_usb_camera.launch
   ```
-
-* run color balancing node ( remote pc side ) (if necessary... you don't need to run this in some cases)
-
-  ```bash
-  $ roslaunch turtlebot3_auto_sensor image_proc_color_balancing.launch
-  ```
-
-* send Bool 'True' message for activating color balancing node  ( remote pc side )  (if necessary... you don't need to run this in some cases)
-
-  ```bash
-  $ rostopic pub /click std_msgs/Bool True
-  ```
-
 * run line detection node  ( remote pc side ) 
 
   ```bash
