@@ -11,8 +11,6 @@ from math import floor, atan2, pi, cos, sin, sqrt
 import time
 from geometry_msgs.msg import Twist
 
-
-
 class LaneFilterNode(object):
     """
 
@@ -31,15 +29,18 @@ For more info on algorithm and parameters please refer to the google doc:
     """
     def __init__(self):
         self.node_name = "Lane Filter"
-        self.active = True 
-        #self.beliefRV=np.empty(self.d.shape)
-        #self.initializeBelief()
-        
-        self.prev_extend_x = 50
-	self.prev_extend_y = 50
-	self.prev_extend_d = 50
-	self.prev_time = None
-	self.prevtwist = Twist()
+	self.active = True 
+        self.white_x = 0
+	self.white_y = 0
+	self.white_length = 0
+	self.white_degree = 0
+	self.white_time = 0
+
+	self.yellow_x = 0
+	self.yellow_y = 0
+	self.yellow_length = 0
+	self.yellow_degree = 0
+	self.yellow_time = 0
 
         # Subscribers
         self.sub = rospy.Subscriber("segment_list", SegmentList, self.processSegments, queue_size=1)
@@ -66,96 +67,124 @@ For more info on algorithm and parameters please refer to the google doc:
 
 	if segment.color == segment.YELLOW:
 	    if segment.pixels_normalized[0].x <= segment.pixels_normalized[1].x:   
-	        p1 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
-                p2 = np.array([segment.pixels_normalized[1].x, segment.pixels_normalized[1].y])
+		p1 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
+		p2 = np.array([segment.pixels_normalized[1].x, segment.pixels_normalized[1].y])
 	    else:
 		p1 = np.array([segment.pixels_normalized[1].x, segment.pixels_normalized[1].y])
-                p2 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
+		p2 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
 
 	elif segment.color == segment.WHITE:
+	    img_w = 160
+	    img_h = 120 - 30	    
+	    segment.pixels_normalized[0].x = 160 - segment.pixels_normalized[0].x
+	    segment.pixels_normalized[1].x = 160 - segment.pixels_normalized[1].x	
 	    if segment.pixels_normalized[0].x >= segment.pixels_normalized[1].x:   
-	        p1 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
-                p2 = np.array([segment.pixels_normalized[1].x, segment.pixels_normalized[1].y])
+		p1 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
+		p2 = np.array([segment.pixels_normalized[1].x, segment.pixels_normalized[1].y])
 	    else:
 		p1 = np.array([segment.pixels_normalized[1].x, segment.pixels_normalized[1].y])
-                p2 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])	
-	    return 0,0,0
-
+		p2 = np.array([segment.pixels_normalized[0].x, segment.pixels_normalized[0].y])
 	else:
 	    return 0,0,0
 
+
+
+
 	delta_p = p2-p1
-	inclination = abs(delta_p[1] / delta_p[0])
+	if delta_p[0] == 0 :	
+	    rospy.loginfo( "delta_p[0] isinfinite happen" )
+	    return 
+	inclination = abs(delta_p[1] / delta_p[0])	
 	extend_y = inclination*p1[0] + p1[1]
+	if inclination == 0 :	
+	    rospy.loginfo( "inclination isinfinite happen" )
+	    return 
+
 	extend_x = extend_y/inclination
+	#extend_length = np.linalg.norm([extend_x,0]-[0,extend_y])
+	extend_length = extend_x*extend_x + extend_y*extend_y	
+	extend_degree =  np.arctan([extend_y,extend_x])
+	cur_time = rospy.get_time()
 
-        beta = 0.85
-        a_extend_x = beta*extend_x + (1 - beta)*self.prev_extend_x
-	a_extend_y = beta*extend_y + (1 - beta)*self.prev_extend_y
+	if extend_x<0 or extend_y<0 :
+	    self.onVehicleStop() 
+	    rospy.loginfo( "Unexpected situation. So Robot Stop1 " )
 
-	extend_d = a_extend_x*a_extend_x + a_extend_y*a_extend_y
-	a_extend_d = beta*extend_d + (1 - beta)*self.prev_extend_d
- 	#rospy.loginfo('generate %f %f %f %f', segment.pixels_normalized[0].x,segment.pixels_normalized[0].y, segment.pixels_normalized[1].x,segment.pixels_normalized[1].y)
-	eculidean = np.linalg.norm(p2-p1)
-        
-        if segment.color == segment.WHITE: # right lane is white
-	    rospy.loginfo('                                   WHITE x %.1f y %.1f x %.1f y %.1f', p1[0],p1[1],p2[0],p2[1] )
-	    rospy.loginfo('                                   WHITE d %.1f d %.1f _ %.1f', d1,d2, eculidean )	
-	    rospy.loginfo('                                   WHITE d_i %.1f l_i %.1f phi_i %.1f', d_i,l_i,phi_i )	    	
-            if(p1[0] > p2[0]): # right edge of white lane
-                d_i = d_i - self.linewidth_white
-            else: # left edge of white lane
-                d_i = - d_i
-                phi_i = -phi_i
-            d_i = d_i - self.lanewidth/2
+	beta = 0.85	
+	angular = 0.0
+	velocity = 0.08
 
-        elif segment.color == segment.YELLOW: # left lane is yellow
-	    #rospy.loginfo('YELLOW x %.1f y %.1f x %.1f y %.1f', p1[0],p1[1],p2[0],p2[1] )
-	    #rospy.loginfo('YELLOW d %.1f d %.1f _ %.1f', d1,d2, eculidean )
-	    #rospy.loginfo('YELLOW d_i %.1f l_i %.1f phi_i %.1f', d_i,l_i,phi_i )
-	    rospy.loginfo('YELLOW ex %.1f(%.1f) ey %.1f(%.1f) _ distance %.1f(%.1f) ', extend_x,a_extend_x,extend_y,a_extend_y, extend_d,a_extend_d )
 
-	self.prev_extend_x = a_extend_x
-	self.prev_extend_y = a_extend_y
-	self.prev_extend_d = a_extend_d	
-	
+	if segment.color == segment.WHITE: # right lane is white # IS operating yellow disappear
+	    self.white_x = beta*extend_x + (1 - beta)*self.white_x
+	    self.white_y = beta*extend_y + (1 - beta)*self.white_y
+	    self.white_length = beta*extend_length + (1 - beta)*self.white_length
+	    self.white_degree = beta*extend_degree + (1 - beta)*self.white_degree
+	    self.white_time = cur_time
+
+	elif segment.color == segment.YELLOW: # right lane is white # IS operating yellow disappear
+	    self.yellow_x = beta*extend_x + (1 - beta)*self.yellow_x
+	    self.yellow_y = beta*extend_y + (1 - beta)*self.yellow_y
+	    self.yellow_length = beta*extend_length + (1 - beta)*self.yellow_length
+	    self.yellow_degree = beta*extend_degree + (1 - beta)*self.yellow_degree
+	    self.yellow_time = cur_time
+
+
+    	if (self.white_time - self.yellow_time)> 0.3 :           
+
+	    if 5500 < self.white_length and self.white_length <= 6500 :
+    	        angular = 0.19
+		#rospy.loginfo( "test1")
+	    elif 6500 < self.white_length and self.white_length <= 7500 :
+                angular = 0.29
+		#rospy.loginfo( "test2")
+	    elif 7500 < self.white_length :
+    	        angular = 0.39
+		#rospy.loginfo( "test3")
+	    else :
+	        self.onVehicleStop() 
+	        rospy.loginfo( "Unexpected situation. So Robot Stop2 " )
+                # vehicle stop , and 360 rotation , search line ??
+
+	    rospy.loginfo( 'only white %.0f  , arg %.1f , time_di %.2f',self.white_length , angular, ( self.white_time - self.yellow_time ) )
+
+	else :
+
+	    if self.yellow_length <= 1500 :
+	    	angular= 0.39
+	    elif 1500 < self.yellow_length and self.yellow_length <= 2500 :
+	    	angular =  0.29
+	    elif 2500 < self.yellow_length and self.yellow_length <= 3500 :
+	    	angular =  0.19
+	    elif 3500 < self.yellow_length and self.yellow_length <= 6500 :
+		angular =  0
+	    elif 6500 < self.yellow_length and self.yellow_length <= 7500 :
+	        angular = -0.19
+	    elif 7500 < self.yellow_length and self.yellow_length <= 8500 :
+	        angular = -0.29
+	    elif 8500 < self.yellow_length and self.yellow_length <= 15000 :
+	        angular = -0.39
+ 	    elif 15000 < self.yellow_length :
+	        angular = -0.39
+		velocity = 0.05
+
+	    rospy.loginfo( ' yellow_length %.0f , arg %.1f ',self.yellow_length , angular )
+
 	twist = Twist() 
-	twist.linear.x = 0.05; twist.linear.y = 0.0; twist.linear.z = 0.0
-	twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
-
-	if a_extend_d <= 1500 :
-	    twist.angular.z = -0.3
-	elif 1500 < a_extend_d and a_extend_d <= 2500 :
-	    twist.angular.z =  0.2
-	elif 2500 < a_extend_d and a_extend_d <= 3500 :
-	    twist.angular.z =  0.1
-	#############################################################3	
-	#elif 5500 < a_extend_d and a_extend_d <= 6500 :
-	#    twist.angular.z = -0.1
-	elif 6500 < a_extend_d and a_extend_d <= 7500 :
-	    twist.angular.z = -0.2
-	elif 7500 < a_extend_d and a_extend_d <= 8500 :
-	    twist.angular.z = -0.3
-	elif 8500 < a_extend_d :#and a_extend_d <= 9500 :
-	    twist.angular.z = -0.5
-	#elif 9500 < a_extend_d :
-	 #   twist.angular.z = -0.5
-
-
+	twist.linear.x = velocity ; twist.linear.y = 0.0 ; twist.linear.z = 0.0
+	twist.angular.x = 0.0 ; twist.angular.y = 0.0 ; twist.angular.z = angular
 	self.pub_car_cmd.publish(twist)
-        rospy.loginfo('publish twist %.2f ,%.1f ,%.1f _ %.1f ,%.1f ,%.1f',twist.linear.x,twist.linear.y,twist.linear.z,twist.angular.x,twist.angular.y,twist.angular.z)
-	
-	self.prevtwist = twist
+    	#rospy.loginfo('publish velocity %.2f , argural %.1f',velocity, angular )
+    	return
 
-	#rospy.loginfo('generateVote finish')
-        return
-
-    def onShutdown(self):
+    def onVehicleStop(self):
 	twist = Twist() 
 	twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
 	twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
 	self.pub_car_cmd.publish(twist)
-	#self.pub_car_cmd.publish(twist)
+
+    def onShutdown(self):
+	self.onVehicleStop()
         rospy.loginfo("[LaneFilterNode] Shutdown.")
 
 if __name__ == '__main__':

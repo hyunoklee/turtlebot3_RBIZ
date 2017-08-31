@@ -122,7 +122,7 @@ class LineDetectorNode(object):
         self.stats.processed()
 
         if self.intermittent_log_now():
-            self.intermittent_log(self.stats.info())
+            #self.intermittent_log(self.stats.info())
             self.stats.reset()
 
         tk = TimeKeeper(image_msg)
@@ -200,10 +200,12 @@ class LineDetectorNode(object):
             #lines_normalized_white = ((white.lines + arr_cutoff) * arr_ratio)
 	    lines_normalized_white = white.lines
             segmentList.segments.extend(self.toSegmentMsg(lines_normalized_white, white.normals, Segment.WHITE))
+	    #rospy.loginfo('white detect ')
         if len(yellow.lines) > 0:
             #lines_normalized_yellow = ((yellow.lines + arr_cutoff) * arr_ratio)
-	    lines_normalized_yellow = yellow.lines
+	    lines_normalized_yellow = yellow.lines	    
             segmentList.segments.extend(self.toSegmentMsg(lines_normalized_yellow, yellow.normals, Segment.YELLOW))
+	    #rospy.loginfo('yellow detect ' )
         if len(red.lines) > 0:
             #lines_normalized_red = ((red.lines + arr_cutoff) * arr_ratio)
 	    lines_normalized_red = red.lines
