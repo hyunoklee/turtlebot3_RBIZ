@@ -1,6 +1,7 @@
 This package refers to the [MIT Duckie Town source](https://github.com/duckietown/Software)
 
-You can find where the progress stopped by searching 'progress 3 stopped here' statement.
+First you install turtlebot3 default setting. 
+http://turtlebot3.robotis.com/en/latest/
 
 # Install
 The following are needed to be installed or downloaded
@@ -66,7 +67,6 @@ These packages can be launched by following commands
 
   ```bash
   $ roslaunch motor_control motor_controller_node.launch
-
 
 # Tool
 

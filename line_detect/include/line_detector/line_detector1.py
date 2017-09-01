@@ -33,10 +33,10 @@ class LineDetectorHSV(Configurable, LineDetectorInterface):
         Configurable.__init__(self, param_names, configuration)
 
         # Color value range in HSV space: default
-#         self.hsv_white1 = np.array([0, 0, 150])
-#         self.hsv_white2 = np.array([180, 50, 255])
-#         self.hsv_yellow1 = np.array([25, 120, 90])
-#         self.hsv_yellow2 = np.array([45, 255, 255])
+        self.hsv_white1 = np.array([0, 0, 150])
+        self.hsv_white2 = np.array([180, 50, 255])
+        self.hsv_yellow1 = np.array([25, 120, 90])
+        self.hsv_yellow2 = np.array([45, 255, 255])
 #         self.hsv_red1 = np.array([0, 140, 100])
 #         self.hsv_red2 = np.array([15, 255, 255])
 #         self.hsv_red3 = np.array([165, 140, 100])
@@ -103,9 +103,10 @@ class LineDetectorHSV(Configurable, LineDetectorInterface):
     def _colorFilter(self, color):
         # threshold colors in HSV space
         if color == 'white':
-            bw = cv2.inRange(self.hsv, self.hsv_white1, self.hsv_white2)
+            bw = cv2.inRange(self.hsv, self.hsv_white1, self.hsv_white2)	    
         elif color == 'yellow':
             bw = cv2.inRange(self.hsv, self.hsv_yellow1, self.hsv_yellow2)
+	    print('yellow %d , %d , %d  ', self.hsv_yellow1[0] , self.hsv_yellow1[1] , self.hsv_yellow1[2])	
         elif color == 'red':
             bw1 = cv2.inRange(self.hsv, self.hsv_red1, self.hsv_red2)
             bw2 = cv2.inRange(self.hsv, self.hsv_red3, self.hsv_red4)
