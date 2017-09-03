@@ -42,10 +42,11 @@ These packages can be launched by following commands
   $ roscore
   ```
 
-* run camera node ( turtle_bot side )
+* run camera , openCR, Lidar node ( turtle_bot side )
 
   ```bash
   $ roslaunch turtlebot3_auto_sensor image_get_usb_camera.launch
+  $ roslaunch turtlebot3_bringup turtlebot3_robot.launch
   ```
 * run line detection node  ( remote pc side ) 
 
