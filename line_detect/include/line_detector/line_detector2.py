@@ -117,6 +117,7 @@ class LineDetector2Dense(Configurable, LineDetectorInterface):
     def detectLines(self, color):
         bw, edge_color = self._colorFilter(color)
         lines, normals, centers = self._lineFilter(bw, edge_color)
+	#print('detectLines2')
         return Detections(lines=lines, normals=normals, area=bw, centers=centers)
 
     def setImage(self, bgr):

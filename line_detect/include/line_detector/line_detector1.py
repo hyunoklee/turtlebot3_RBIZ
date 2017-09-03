@@ -28,15 +28,16 @@ class LineDetectorHSV(Configurable, LineDetectorInterface):
             'hough_threshold',
             'hough_min_line_length',
             'hough_max_line_gap',
+	    'parking',
         ]
 
         Configurable.__init__(self, param_names, configuration)
 
         # Color value range in HSV space: default
-        self.hsv_white1 = np.array([0, 0, 150])
-        self.hsv_white2 = np.array([180, 50, 255])
-        self.hsv_yellow1 = np.array([25, 120, 90])
-        self.hsv_yellow2 = np.array([45, 255, 255])
+#         self.hsv_white1 = np.array([0, 0, 150])
+#         self.hsv_white2 = np.array([180, 50, 255])
+#         self.hsv_yellow1 = np.array([25, 120, 90])
+#         self.hsv_yellow2 = np.array([45, 255, 255])
 #         self.hsv_red1 = np.array([0, 140, 100])
 #         self.hsv_red2 = np.array([15, 255, 255])
 #         self.hsv_red3 = np.array([165, 140, 100])
@@ -106,7 +107,7 @@ class LineDetectorHSV(Configurable, LineDetectorInterface):
             bw = cv2.inRange(self.hsv, self.hsv_white1, self.hsv_white2)	    
         elif color == 'yellow':
             bw = cv2.inRange(self.hsv, self.hsv_yellow1, self.hsv_yellow2)
-	    print('yellow %d , %d , %d  ', self.hsv_yellow1[0] , self.hsv_yellow1[1] , self.hsv_yellow1[2])	
+	    #print('yellow %d , %d , %d  ', self.hsv_yellow1[0] , self.hsv_yellow1[1] , self.hsv_yellow1[2])	
         elif color == 'red':
             bw1 = cv2.inRange(self.hsv, self.hsv_red1, self.hsv_red2)
             bw2 = cv2.inRange(self.hsv, self.hsv_red3, self.hsv_red4)
@@ -131,7 +132,10 @@ class LineDetectorHSV(Configurable, LineDetectorInterface):
         lines = cv2.HoughLinesP(edge, 1, np.pi/180, self.hough_threshold, np.empty(1), self.hough_min_line_length, self.hough_max_line_gap)
 	#print('testttttttttttt %d ',self.hough_min_line_length)
         if lines is not None:
-            lines = np.array(lines[0])
+	    if self.parking == 0 :
+               lines = np.array(lines[0])
+	    else :
+	       lines = lines
         else:
             lines = []
         return lines
@@ -187,12 +191,17 @@ class LineDetectorHSV(Configurable, LineDetectorInterface):
                     normals[cnt,:] = [-dx, -dy]
             """
             self._correctPixelOrdering(lines, normals)
-        return centers, normals
+        return centers, normals     
 
     def detectLines(self, color):
         bw, edge_color = self._colorFilter(color)
         lines = self._HoughLine(edge_color)
-        centers, normals = self._findNormal(bw, lines)
+	if self.parking == 0 :
+            centers, normals = self._findNormal(bw, lines)
+	else :
+            centers = None
+	    normals = None
+	    print('_findNormal2')
         return Detections(lines=lines, normals=normals, area=bw, centers=centers)
 
     def setImage(self, bgr):

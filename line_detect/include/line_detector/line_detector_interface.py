@@ -14,5 +14,7 @@ class LineDetectorInterface():
     @abstractmethod
     def detectLines(self, color):
         """ Returns a tuple of class Detections """
+    def detectLines2(self, color):
+        """ Returns a tuple of class Detections """
 
 
